@@ -1,19 +1,16 @@
 import json
 import logging 
-import os
 import time
 
 import requests
 from bs4 import BeautifulSoup
 
 
-API_TOKEN = os.getenv('API_TOKEN')
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
         "(KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36",
-    "Authorization": f"Bearer {API_TOKEN}",
     }
 
 def get_restaurant_url_list(text_file: str) -> list:
