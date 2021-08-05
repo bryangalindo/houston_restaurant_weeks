@@ -42,6 +42,7 @@ def get_restaurant_data(url: str) -> dict:
 
 def generate_restaurant_data_list(urls: list) -> list:
     restaurant_data_list = []
+    logging.info(f'Beginning to scrape {len(urls)} urls')
     for url in urls:
         restaurant_data = get_restaurant_data(url)
         restaurant_data_list.append(restaurant_data)
