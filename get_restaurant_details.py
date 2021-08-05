@@ -20,7 +20,7 @@ def get_restaurant_url_list(text_file: str) -> list:
     with open(text_file, 'r', encoding='utf-8') as f:
         return [url.strip() for url in f]
         
-def get_restaurant_data(url):
+def get_restaurant_data(url: str) -> dict:
     logging.info(f'Scraping {url}')
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
@@ -48,7 +48,7 @@ def generate_restaurant_data_list(urls: list) -> list:
         time.sleep(1)
     return restaurant_data_list
 
-def generate_json_file(coordinates: list, output_file: str):
+def generate_json_file(coordinates: list, output_file: str) -> None:
     restaurants_dict = {
         'restaurants': coordinates
     }
