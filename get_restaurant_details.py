@@ -1,37 +1,64 @@
+import json
+import logging 
+import os
+import time
+
 import requests
 from bs4 import BeautifulSoup
-from pprint import pprint
 
 
-# url = 'https://houstonrestaurantweeks.com/restaurants/eighteen36/'
-# headers = {
-#     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
-#         "(KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"
-#     }
-# response = requests.get(url, headers=headers)
-# html = BeautifulSoup(response.content, "html.parser")
+API_TOKEN = os.getenv('API_TOKEN')
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 
-# with open('restaurant.html', 'w') as f:
-#     f.write(str(html))
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
+        "(KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36",
+    "Authorization": f"Bearer {API_TOKEN}",
+    }
 
-with open('restaurant.html', 'r') as f:
+def get_restaurant_url_list(text_file: str) -> list:
+    with open(text_file, 'r', encoding='utf-8') as f:
+        return [url.strip() for url in f]
+        
+def get_restaurant_data(url):
+    logging.info(f'Scraping {url}')
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        logging.info('Successful request')
+        html = BeautifulSoup(response.content, 'html.parser')
+        name = html.find('h1').text if html.find('h1') else ''
+        latitude = html.find("input", {"id": "latitude"}).get('value', {})
+        longitude = html.find("input", {"id": "longitude"}).get('value', {})
+        return {
+            'name': name,
+            'hrw_url': url,
+            'coordinates': {
+                'latitude': latitude,
+                'longitude': longitude,
+            }
+        }
+    else:
+        logging.warning(f'Request was not successful. Status code: {response.status_code}')
 
-    contents = f.read()
+def generate_restaurant_data_list(urls: list) -> list:
+    restaurant_data_list = []
+    for url in urls:
+        restaurant_data = get_restaurant_data(url)
+        restaurant_data_list.append(restaurant_data)
+        time.sleep(1)
+    return restaurant_data_list
 
-    soup = BeautifulSoup(contents, 'html.parser')
-
-    restaurant_info_table = soup.find('table', {'class': 'info'})
-    restaurant_info_rows = restaurant_info_table.find_all('td')
-    restaurant_info = [row.text for row in restaurant_info_rows]
-    print(restaurant_info)
-
-    menu_options_table = soup.find('div', {'class': 'tab_container'})
-    dinner_menu_element = menu_options_table.find('div', {'id': 'dinnerMenu'})
-    lunch_menu_element = menu_options_table.find('div', {'id': 'lunchMenu'})
-    brunch_menu_element = menu_options_table.find('div', {'id': 'brunchMenu'})
-    print(dinner_menu_element.text)
-    print(lunch_menu_element.text)
-    print(brunch_menu_element.text)
-
-
+def generate_json_file(coordinates: list, output_file: str):
+    restaurants_dict = {
+        'restaurants': coordinates
+    }
+    with open(output_file, 'w', encoding='utf8') as outfile:
+        logging.info('Writing restaurant data to json file')
+        json.dump(restaurants_dict, outfile, ensure_ascii=False)
+                
+if __name__ == '__main__':
+    urls = get_restaurant_url_list('restaurant_urls.txt')
+    restaurant_data = generate_restaurant_data_list(urls)
+    generate_json_file(restaurant_data, 'restaurant_data.json')
+    
     
