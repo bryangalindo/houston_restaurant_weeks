@@ -1,17 +1,29 @@
 import os
 import json
 
-API_TOKEN = os.getenv('API_TOKEN')
+import requests
+
+
+API_KEY = os.getenv('API_KEY')
 headers = {
-    "Authorization": f"Bearer {API_TOKEN}",
+    "Authorization": f"Bearer {API_KEY}",
 }
+
+yelp_api_endpoint = 'https://api.yelp.com/v3/businesses/search?term={}&latitude={}&longitude={}'
 
 def convert_json_to_dict(json_file:str) -> dict:
     with open(json_file, encoding='utf-8') as json_file:
         return json.load(json_file)
 
 def get_yelp_data(restaurant:dict) -> dict:
-    pass
+    response = requests.get(
+        url=yelp_api_endpoint.format(
+            restaurant['name'], 
+            restaurant['coordinates']['latitude'], 
+            restaurant['coordinates']['longitude'],
+            ),
+        headers=headers)
+    return response.json()
 
 def update_restaurant_json_file(yelp_data:dict) -> None:
     pass
@@ -24,4 +36,3 @@ def is_similar(restaurant_name:dict) -> bool:
 
 if __name__ =='__main__':
     restaurants_dict = convert_json_to_dict("restaurant_data.json")
-    update_restaurants_with_yelp_data()
