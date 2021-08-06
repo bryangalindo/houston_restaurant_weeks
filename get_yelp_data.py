@@ -23,7 +23,7 @@ def filter_yelp_response(response:dict) -> dict:
             "yelp_name": restaurant_node["name"], 
             "review_count": restaurant_node["review_count"], 
             "rating": restaurant_node["rating"], 
-            "caategories": restaurant_node["categories"], 
+            "categories": restaurant_node["categories"], 
             "phone": restaurant_node["phone"],
             "yelp_url": restaurant_node["url"].split('?')[0],
         }
