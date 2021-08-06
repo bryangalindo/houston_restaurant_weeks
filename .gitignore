@@ -1,3 +1,5 @@
 pipfile*
 .env
 restaurant_data.json
+error.log
+master_data.json
