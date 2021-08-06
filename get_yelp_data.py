@@ -14,6 +14,9 @@ yelp_api_endpoint = 'https://api.yelp.com/v3/businesses/search?term={}&latitude=
 def convert_json_to_dict(json_file:str) -> dict:
     with open(json_file, encoding='utf-8') as json_file:
         return json.load(json_file)
+    
+def filter_yelp_response(response:dict) -> dict:
+    pass
 
 def get_yelp_data(restaurant:dict) -> dict:
     response = requests.get(
