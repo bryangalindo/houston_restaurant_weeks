@@ -15,7 +15,7 @@ stdout_handler = logging.StreamHandler(sys.stdout)
 stdout_handler.setLevel(logging.INFO)
 stdout_handler.setFormatter(formatter)
 
-file_handler = logging.FileHandler('error_logs.log')
+file_handler = logging.FileHandler('error.log')
 file_handler.setLevel(logging.WARNING)
 file_handler.setFormatter(formatter)
 
@@ -28,13 +28,11 @@ headers = {"Authorization": f"Bearer {API_KEY}"}
 yelp_api_endpoint = 'https://api.yelp.com/v3/businesses/search?term={}&latitude={}&longitude={}'
 
 
-def is_similar(a:str, b:str) -> bool:
+def is_not_similar(a:str, b:str) -> None:
+    logger.info(f'Checking if {a} and {b} are similar.')
     ratio = SequenceMatcher(None, a, b).ratio()
-    if ratio > .5:
-        return True
-    else:
-        logging.WARNING(f'HRW name {a} is not similar to Yelp\'s first search result {b}.')
-        return False
+    if ratio < .5:
+        logger.warning(f'HRW name {a} is not similar to the first Yelp search result {b}.')
 
 def convert_json_to_dict(json_file:str) -> dict:
     with open(json_file, encoding='utf-8') as json_file:
@@ -52,6 +50,7 @@ def filter_yelp_response(restaurant_name:str, response:dict) -> dict:
             "phone": restaurant_node["phone"],
             "yelp_url": restaurant_node["url"].split('?')[0],
         }
+        is_not_similar(restaurant_name, restaurant_node["name"])
         logger.info(f'Filtered Yelp response. Result: {filtered_yelp_response}.')
         return filtered_yelp_response
     else:
@@ -71,18 +70,22 @@ def get_yelp_data(restaurant:dict) -> dict:
         filtered_dict = filter_yelp_response(restaurant['name'], response.json())
         return filtered_dict
     else:
-        logger.warning(f'Unsuccessful call to Yelp API. Status code: {response.status_code}. {response.reason}.')
+        logger.warning(f'Unsuccessful call to Yelp API. Status code: {response.status_code}. {response.reason}. {url}.')
 
-def update_restaurant_json_file(yelp_data:dict) -> None:
-    pass
+def write_to_json_file(output_file:str , restaurants:dict) -> None:
+    with open(output_file, 'w', encoding='utf8') as outfile:
+            logger.info('Writing restaurant data to json file')
+            json.dump(restaurants, outfile, ensure_ascii=False)
 
 def update_all_restaurants_with_yelp_data(restaurants:list) -> None:
-    pass
-
-def is_similar(restaurant_name:dict) -> bool:
-    pass
-
+    for restaurant in restaurants:
+        yelp_data = get_yelp_data(restaurant)
+        if yelp_data:
+            restaurant.update(yelp_data)
+    json_contents = {"restaurants": restaurants}
+    write_to_json_file('master_data.json', json_contents)
+    
+    
 if __name__ =='__main__':
     restaurants_dict = convert_json_to_dict("restaurant_data.json")
-    for restaurant in restaurants_dict['restaurants']:
-        get_yelp_data(restaurant)
+    update_all_restaurants_with_yelp_data(restaurants_dict['restaurants'])
