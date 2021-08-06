@@ -1,8 +1,11 @@
-import os
 import json
+import logging
+import os
 
 import requests
 
+
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 
 API_KEY = os.getenv('API_KEY')
 headers = {
@@ -18,7 +21,7 @@ def convert_json_to_dict(json_file:str) -> dict:
 def filter_yelp_response(response:dict) -> dict:
     if len(response["businesses"]) != 0:
         restaurant_node = response["businesses"][0]
-        return {
+        filtered_yelp_response = {
             "yelp_id": restaurant_node["id"],
             "yelp_name": restaurant_node["name"], 
             "review_count": restaurant_node["review_count"], 
@@ -27,16 +30,25 @@ def filter_yelp_response(response:dict) -> dict:
             "phone": restaurant_node["phone"],
             "yelp_url": restaurant_node["url"].split('?')[0],
         }
+        logging.info(f'Filtered Yelp response. Result: {filter_yelp_response}')
+        return filtered_yelp_response
+    else:
+        logging.warning(f'Yelp Search API did not return businesses')
 
 def get_yelp_data(restaurant:dict) -> dict:
-    response = requests.get(
-        url=yelp_api_endpoint.format(
-            restaurant['name'], 
-            restaurant['coordinates']['latitude'], 
-            restaurant['coordinates']['longitude'],
-            ),
-        headers=headers)
-    return filter_yelp_response(response.json())
+    url = yelp_api_endpoint.format(
+        restaurant['name'], 
+        restaurant['coordinates']['latitude'], 
+        restaurant['coordinates']['longitude']
+        )
+    logging.info(f'Gathering Yelp data for {url}')
+    response = requests.get(url=url, headers=headers)
+    if response.status_code == 200:
+        logging.info('Success call to Yelp API!')
+        filtered_dict = filter_yelp_response(response.json())
+        return filtered_dict
+    else:
+        logging.warning(f'Unsuccessful call to Yelp API. Status code: {response.status_code}')
 
 def update_restaurant_json_file(yelp_data:dict) -> None:
     pass
